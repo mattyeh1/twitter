@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Script de verificación completa del sistema Twitter Scraper
 Verifica que todos los componentes estén funcionando correctamente
@@ -11,13 +12,24 @@ import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Colors for terminal output
-GREEN = '\033[92m'
-RED = '\033[91m'
-YELLOW = '\033[93m'
-BLUE = '\033[94m'
-RESET = '\033[0m'
-BOLD = '\033[1m'
+# Set UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    try:
+        # Try to set UTF-8 encoding
+        sys.stdout.reconfigure(encoding='utf-8')
+    except:
+        pass
+
+# Colors for terminal output (disable on Windows if needed)
+try:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+except:
+    GREEN = RED = YELLOW = BLUE = RESET = BOLD = ''
 
 def print_header(text):
     print(f"\n{BLUE}{BOLD}{'='*60}{RESET}")
@@ -25,16 +37,20 @@ def print_header(text):
     print(f"{BLUE}{BOLD}{'='*60}{RESET}\n")
 
 def print_success(text):
-    print(f"{GREEN}✓ {text}{RESET}")
+    # Use [OK] instead of checkmark for Windows compatibility
+    print(f"{GREEN}[OK] {text}{RESET}")
 
 def print_error(text):
-    print(f"{RED}✗ {text}{RESET}")
+    # Use [X] instead of X mark for Windows compatibility
+    print(f"{RED}[X] {text}{RESET}")
 
 def print_warning(text):
-    print(f"{YELLOW}⚠ {text}{RESET}")
+    # Use [!] instead of warning symbol for Windows compatibility
+    print(f"{YELLOW}[!] {text}{RESET}")
 
 def print_info(text):
-    print(f"{BLUE}ℹ {text}{RESET}")
+    # Use [i] instead of info symbol for Windows compatibility
+    print(f"{BLUE}[i] {text}{RESET}")
 
 def check_python_version():
     """Verificar versión de Python"""
@@ -76,24 +92,26 @@ def check_redis():
 def check_dependencies():
     """Verificar dependencias de Python"""
     print_info("Verificando dependencias de Python...")
-    required = [
-        'flask',
-        'celery',
-        'redis',
-        'selenium',
-        'beautifulsoup4',
-        'lxml',
-        'python-dotenv',
-        'flask_cors'
-    ]
+
+    # Map package names to import names
+    required = {
+        'flask': 'flask',
+        'celery': 'celery',
+        'redis': 'redis',
+        'selenium': 'selenium',
+        'beautifulsoup4': 'bs4',
+        'lxml': 'lxml',
+        'python-dotenv': 'dotenv',
+        'flask_cors': 'flask_cors'
+    }
 
     all_ok = True
-    for package in required:
+    for package_name, import_name in required.items():
         try:
-            __import__(package.replace('-', '_'))
-            print_success(f"{package}")
+            __import__(import_name)
+            print_success(f"{package_name}")
         except ImportError:
-            print_error(f"{package} NO INSTALADO")
+            print_error(f"{package_name} NO INSTALADO")
             all_ok = False
 
     return all_ok
@@ -313,11 +331,11 @@ def print_summary(results):
 
     print(f"\n{BOLD}Estado del sistema: ", end="")
     if percentage == 100:
-        print(f"{GREEN}PERFECTO ✓{RESET}")
+        print(f"{GREEN}PERFECTO [OK]{RESET}")
     elif percentage >= 80:
         print(f"{YELLOW}BUENO (con advertencias){RESET}")
     else:
-        print(f"{RED}NECESITA ATENCIÓN{RESET}")
+        print(f"{RED}NECESITA ATENCION{RESET}")
 
     print(f"\nPorcentaje de éxito: {percentage:.1f}%")
 
