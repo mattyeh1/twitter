@@ -102,29 +102,45 @@ docker-compose logs -f
 # - Flower (Celery): http://localhost:5555
 ```
 
-### **Opción 2: Instalación Local**
+### **Opción 2: Instalación Local (Windows)**
 
 #### **Requisitos previos:**
-- Python 3.9+
-- Redis
-- Chrome/Chromium
+- Python 3.8+ (recomendado 3.10 o 3.11, evitar 3.14 pre-release)
+- Redis para Windows
+- Chrome + ChromeDriver
 
 #### **Pasos:**
 
 ```bash
-# 1. Clonar repositorio
-git clone <repo-url>
-cd twitter-scraper
+# 1. Instalar Redis para Windows
+# Descargar e instalar de: https://github.com/tporadowski/redis/releases
+# Después de instalar, iniciar Redis:
+redis-server
 
-# 2. Crear entorno virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate    # Windows
+# 2. Clonar repositorio
+git clone <repo-url>
+cd twitter
 
 # 3. Instalar dependencias
 pip install -r requirements.txt
 
-# 4. Instalar Redis
+# 4. Verificar instalación
+python VERIFICAR_SISTEMA.py
+# O usar el batch file:
+VERIFICAR_SISTEMA.bat
+
+# 5. Si todo OK, iniciar servicios
+# OPCIÓN A: Inicio completo (instala + inicia)
+start_windows.bat
+
+# OPCIÓN B: Inicio rápido (solo inicia)
+INICIO_RAPIDO.bat
+```
+
+### **Opción 3: Instalación Local (Linux/Mac)**
+
+```bash
+# 1. Instalar Redis
 # Ubuntu/Debian:
 sudo apt-get install redis-server
 sudo systemctl start redis
@@ -133,19 +149,32 @@ sudo systemctl start redis
 brew install redis
 brew services start redis
 
-# Windows:
-# Descargar de: https://github.com/microsoftarchive/redis/releases
+# 2. Clonar repositorio
+git clone <repo-url>
+cd twitter
+
+# 3. Crear entorno virtual
+python -m venv venv
+source venv/bin/activate
+
+# 4. Instalar dependencias
+pip install -r requirements.txt
 
 # 5. Copiar configuración
 cp .env.example .env
 
-# 6. Iniciar servicios
-# Linux/Mac:
-chmod +x start_local.sh
-./start_local.sh
+# 6. Verificar instalación
+python VERIFICAR_SISTEMA.py
 
-# Windows:
-start_local.bat
+# 7. Iniciar servicios manualmente
+# Terminal 1: Flask
+python run.py
+
+# Terminal 2: Celery Worker
+celery -A celery_app.celery_config worker --loglevel=info
+
+# Terminal 3 (opcional): Flower
+celery -A celery_app.celery_config flower --port=5555
 ```
 
 ---
@@ -338,6 +367,27 @@ command: celery -A celery_app.celery_config worker --concurrency=5
 
 ## 🐛 Troubleshooting
 
+### **🔍 Verificación del Sistema**
+
+Antes de reportar errores, ejecuta el script de verificación:
+
+```bash
+python VERIFICAR_SISTEMA.py
+# O:
+VERIFICAR_SISTEMA.bat
+```
+
+Este script verifica:
+- ✓ Python 3.8+
+- ✓ Redis corriendo
+- ✓ Dependencias instaladas
+- ✓ Archivo .env configurado
+- ✓ Directorios creados
+- ✓ ChromeDriver funcional
+- ✓ Celery configurado
+- ✓ Flask app cargable
+- ✓ Redis Python conexión
+
 ### **Redis no se conecta**
 
 ```bash
@@ -346,19 +396,72 @@ redis-cli ping
 # Debe responder: PONG
 
 # Iniciar Redis
-sudo systemctl start redis  # Linux
-brew services start redis   # macOS
+redis-server
+
+# Linux:
+sudo systemctl start redis
+
+# macOS:
+brew services start redis
 ```
+
+### **Error: 'celery' no reconocido (Windows)**
+
+Los scripts de inicio ya usan `python -m celery` en lugar de `celery` para compatibilidad con Windows.
+
+Si necesitas ejecutar Celery manualmente:
+
+```bash
+# ✓ CORRECTO (Windows):
+python -m celery -A celery_app.celery_config worker --loglevel=info --pool=solo
+
+# ✗ INCORRECTO:
+celery -A celery_app.celery_config worker --loglevel=info
+```
+
+### **Error: Botones no funcionan / Web rota**
+
+Verifica que `.env` use `localhost` en lugar de `redis`:
+
+```ini
+# ✓ CORRECTO (instalación local Windows):
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+REDIS_URL=redis://localhost:6379/0
+
+# ✗ INCORRECTO (solo para Docker):
+CELERY_BROKER_URL=redis://redis:6379/0
+```
+
+### **Error: lxml no se instala (Python 3.14)**
+
+Si usas Python 3.14 (pre-release), lxml puede fallar. Soluciones:
+
+```bash
+# Opción 1: Actualizar a lxml con binarios
+pip install --upgrade lxml
+
+# Opción 2: Usar Python 3.10 o 3.11 (recomendado)
+```
+
+El `requirements.txt` incluye `lxml>=5.0.0` que tiene binarios para Python 3.14.
 
 ### **Chrome no se encuentra**
 
 ```bash
 # Instalar Chrome/Chromium
-sudo apt-get install google-chrome-stable  # Ubuntu
-brew install --cask google-chrome          # macOS
+# Ubuntu:
+sudo apt-get install google-chrome-stable
 
-# O usar Chromium
-sudo apt-get install chromium-browser
+# macOS:
+brew install --cask google-chrome
+
+# Windows:
+# Descargar de: https://www.google.com/chrome/
+
+# Instalar ChromeDriver:
+# https://chromedriver.chromium.org/
+# Debe coincidir con tu versión de Chrome
 ```
 
 ### **Error: "No driver available"**
@@ -367,15 +470,35 @@ sudo apt-get install chromium-browser
 - Espera a que se libere uno, o
 - Aumenta `DRIVER_POOL_SIZE` en `.env`
 
+```ini
+# .env
+DRIVER_POOL_SIZE=5  # Aumentar de 3 a 5
+```
+
 ### **Tareas quedan en "PENDING"**
 
 ```bash
 # Verificar que Celery worker está corriendo
-celery -A celery_app.celery_config inspect active
+python -m celery -A celery_app.celery_config inspect active
 
-# Reiniciar worker
+# Reiniciar worker (Windows):
+# Cerrar ventana de Celery y ejecutar de nuevo:
+python -m celery -A celery_app.celery_config worker --loglevel=info --pool=solo
+
+# Docker:
 docker-compose restart celery_worker
 ```
+
+### **GPU warnings al iniciar Chrome**
+
+Mensajes como estos son normales y no afectan el funcionamiento:
+
+```
+[WARNING]: GPU is not supported
+DevToolsActivePort file doesn't exist
+```
+
+El scraper funciona correctamente con estos warnings.
 
 ---
 
