@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Tweets de @{{ username }}{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>@{{ username }}</h1>
+    <p class="subtitle">{{ tweets|length }} tweets guardados</p>
+
+    <div class="nav">
+        <a href="/" class="nav-link">← Volver al Dashboard</a>
+    </div>
+</div>
+
+{% for tweet in tweets %}
+<div class="section" style="margin-bottom: 15px;">
+    {% if tweet.is_retweet %}
+    <div style="color: #1da1f2; font-weight: 600; margin-bottom: 8px;">
+        🔄 Retweet
+        {% if tweet.original_author %}
+        de @{{ tweet.original_author }}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div style="font-size: 1.1em; line-height: 1.5; margin-bottom: 15px; color: #14171a;">
+        {{ tweet.tweet_text }}
+    </div>
+
+    <div style="display: flex; gap: 20px; color: #657786; font-size: 0.9em; flex-wrap: wrap;">
+        <span>❤️ {{ tweet.likes }}</span>
+        <span>🔄 {{ tweet.retweets }}</span>
+        <span>💬 {{ tweet.replies }}</span>
+        <span class="badge" style="background: #e1e8ed;">{{ tweet.language }}</span>
+        {% if tweet.is_retweet %}
+        <span class="badge badge-active">RT</span>
+        {% endif %}
+        <a href="{{ tweet.tweet_url }}" target="_blank" style="color: #1da1f2; text-decoration: none; font-weight: 500;">
+            Ver en X →
+        </a>
+    </div>
+</div>
+{% endfor %}
+
+{% if not tweets %}
+<div class="section">
+    <p style="text-align: center; color: #666; padding: 40px;">
+        No hay tweets guardados para este perfil aún.
+    </p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Twitter Scraper{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🐦 Twitter Scraper Dashboard</h1>
+    <p class="subtitle">Sistema avanzado con pool de drivers y scraping concurrente</p>
+
+    <div class="nav">
+        <a href="/" class="nav-link">Dashboard</a>
+        <a href="/search" class="nav-link">Buscar Tweets</a>
+        <a href="/monitoring" class="nav-link">Monitoreo</a>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_profiles }}</div>
+        <div class="stat-label">Perfiles</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.active_profiles }}</div>
+        <div class="stat-label">Activos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_tweets }}</div>
+        <div class="stat-label">Tweets</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.today_tweets }}</div>
+        <div class="stat-label">Hoy</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>➕ Agregar Nuevo Perfil</h2>
+    <form method="POST" action="/add_profile">
+        <div class="form-group">
+            <label>Username (sin @)</label>
+            <input type="text" name="username" placeholder="ejemplo: elonmusk" required>
+        </div>
+        <div class="form-group">
+            <label>Intervalo de scraping (horas)</label>
+            <input type="number" name="interval" value="12" min="1" max="168" required>
+        </div>
+        <button type="submit">Agregar Perfil</button>
+    </form>
+</div>
+
+<div class="section">
+    <h2>📋 Perfiles Monitoreados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Intervalo</th>
+                <th>Último Scrape</th>
+                <th>Tweets</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td><strong>@{{ profile.username }}</strong></td>
+                <td>{{ profile.scrape_interval_hours }}h</td>
+                <td>{{ profile.last_scraped or 'Nunca' }}</td>
+                <td>{{ profile.tweet_count }}</td>
+                <td>
+                    {% if profile.is_active %}
+                    <span class="badge badge-active">Activo</span>
+                    {% else %}
+                    <span class="badge badge-inactive">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn-small btn-success" onclick="scrapeNow('{{ profile.username }}')">
+                        🚀 Scrapear Ahora
+                    </button>
+                    <button class="btn-small" onclick="viewTweets('{{ profile.username }}')">
+                        👁 Ver Tweets
+                    </button>
+                    <button class="btn-small btn-danger" onclick="deleteProfile({{ profile.id }})">
+                        🗑 Eliminar
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function scrapeNow(username) {
+        if (!confirm(`¿Scrapear @${username} ahora?\n\nSe agregará a la cola de scraping.`)) {
+            return;
+        }
+
+        fetch(`/scrape_now/${username}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.task_id) {
+                    // Start tracking this task
+                    checkTaskStatus(data.task_id, username);
+                } else {
+                    alert(data.message || 'Scraping iniciado');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error al iniciar scraping');
+            });
+    }
+
+    function viewTweets(username) {
+        window.location.href = `/tweets/${username}`;
+    }
+
+    function deleteProfile(id) {
+        if (!confirm('¿Eliminar este perfil y todos sus tweets?')) {
+            return;
+        }
+
+        fetch(`/delete_profile/${id}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error al eliminar perfil');
+            });
+    }
+</script>
+{% endblock %}

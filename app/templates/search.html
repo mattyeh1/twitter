@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Tweets{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>🔍 Buscar Tweets</h1>
+    <p class="subtitle">Busca en {{ total_tweets }} tweets de {{ total_profiles }} perfiles</p>
+
+    <div class="nav">
+        <a href="/" class="nav-link">← Dashboard</a>
+        <a href="/search" class="nav-link">Buscar</a>
+    </div>
+</div>
+
+<div class="section">
+    <form method="GET" action="/search">
+        <div class="form-group">
+            <input type="text" name="q" placeholder="Buscar en todos los tweets..." value="{{ query }}" autofocus>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Usuario</label>
+                <select name="author">
+                    <option value="">Todos</option>
+                    {% for profile in profiles %}
+                    <option value="{{ profile }}" {% if author == profile %}selected{% endif %}>
+                        @{{ profile }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Idioma</label>
+                <select name="lang">
+                    <option value="">Todos</option>
+                    <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                    <option value="es" {% if lang == 'es' %}selected{% endif %}>Español</option>
+                    <option value="pt" {% if lang == 'pt' %}selected{% endif %}>Português</option>
+                    <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Desde</label>
+                <input type="date" name="date_from" value="{{ date_from }}">
+            </div>
+
+            <div class="form-group">
+                <label>Hasta</label>
+                <input type="date" name="date_to" value="{{ date_to }}">
+            </div>
+        </div>
+
+        <button type="submit">🔍 Buscar</button>
+    </form>
+</div>
+
+{% if searched %}
+<div class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="color: #666;">
+            <strong>{{ results|length }}</strong> resultados
+            {% if query %}para "<strong>{{ query }}</strong>"{% endif %}
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="?q={{ query }}&author={{ author }}&lang={{ lang }}&date_from={{ date_from }}&date_to={{ date_to }}&sort=date"
+               class="btn-small {% if sort == 'date' %}btn-success{% endif %}">
+                📅 Fecha
+            </a>
+            <a href="?q={{ query }}&author={{ author }}&lang={{ lang }}&date_from={{ date_from }}&date_to={{ date_to }}&sort=likes"
+               class="btn-small {% if sort == 'likes' %}btn-success{% endif %}">
+                ❤️ Likes
+            </a>
+        </div>
+    </div>
+
+    {% if results %}
+        {% for tweet in results %}
+        <div style="padding: 20px; border-bottom: 1px solid #eee;">
+            <div style="color: #1da1f2; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span>@{{ tweet.author }}</span>
+                {% if tweet.is_retweet %}
+                <span style="color: #1da1f2; font-weight: 600;">🔄 RT</span>
+                {% if tweet.original_author %}
+                <span style="color: #657786;">de @{{ tweet.original_author }}</span>
+                {% endif %}
+                {% endif %}
+                <span class="badge" style="background: #e1e8ed;">{{ tweet.language or 'unknown' }}</span>
+            </div>
+
+            <div style="font-size: 1.1em; line-height: 1.6; margin-bottom: 15px; color: #14171a;">
+                {{ tweet.highlighted_text|safe }}
+            </div>
+
+            <div style="display: flex; gap: 20px; color: #657786; font-size: 0.9em; align-items: center; flex-wrap: wrap;">
+                <span>❤️ {{ tweet.likes }}</span>
+                <span>🔄 {{ tweet.retweets }}</span>
+                <span>💬 {{ tweet.replies }}</span>
+                <span>{{ tweet.scraped_date[:10] }}</span>
+                <a href="{{ tweet.tweet_url }}" target="_blank" style="color: #1da1f2; text-decoration: none; font-weight: 500;">
+                    Ver en X →
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: #657786;">
+            <div style="font-size: 4em; margin-bottom: 20px;">🔍</div>
+            <h2>No se encontraron resultados</h2>
+            <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .highlight {
+        background: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

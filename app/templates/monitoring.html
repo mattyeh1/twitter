@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Monitoring - Twitter Scraper{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 Sistema de Monitoreo</h1>
+    <p class="subtitle">Estado del pool de drivers y cola de tareas</p>
+
+    <div class="nav">
+        <a href="/" class="nav-link">Dashboard</a>
+        <a href="/search" class="nav-link">Buscar Tweets</a>
+        <a href="/monitoring" class="nav-link">Monitoreo</a>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <div class="stat-number">{{ pool_stats.pool_size }}</div>
+        <div class="stat-label">Pool Size</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pool_stats.available }}</div>
+        <div class="stat-label">Drivers Disponibles</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pool_stats.active }}</div>
+        <div class="stat-label">Drivers Activos</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pool_stats.total_acquired }}</div>
+        <div class="stat-label">Total Adquiridos</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>🔄 Tareas Activas (Celery)</h2>
+    {% if active_tasks %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Worker</th>
+                    <th>Task ID</th>
+                    <th>Task Name</th>
+                    <th>Args</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for worker, tasks in active_tasks.items() %}
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ worker }}</td>
+                        <td><code>{{ task.id[:16] }}...</code></td>
+                        <td>{{ task.name }}</td>
+                        <td>{{ task.args }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay tareas activas en este momento.</p>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>📦 Cola de Tareas Reservadas</h2>
+    {% if reserved_tasks %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Worker</th>
+                    <th>Tareas Reservadas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for worker, tasks in reserved_tasks.items() %}
+                <tr>
+                    <td>{{ worker }}</td>
+                    <td>{{ tasks | length }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay tareas reservadas en este momento.</p>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>⚙️ Estadísticas del Pool</h2>
+    <table>
+        <tr>
+            <th>Métrica</th>
+            <th>Valor</th>
+        </tr>
+        <tr>
+            <td>Total de drivers creados</td>
+            <td>{{ pool_stats.total_created }}</td>
+        </tr>
+        <tr>
+            <td>Total de drivers adquiridos</td>
+            <td>{{ pool_stats.total_acquired }}</td>
+        </tr>
+        <tr>
+            <td>Total de drivers liberados</td>
+            <td>{{ pool_stats.total_released }}</td>
+        </tr>
+        <tr>
+            <td>Utilización actual</td>
+            <td>{{ "%.1f" | format((pool_stats.active / pool_stats.pool_size * 100) if pool_stats.pool_size > 0 else 0) }}%</td>
+        </tr>
+    </table>
+</div>
+
+<button onclick="location.reload()" style="margin-top: 20px;">🔄 Actualizar Estadísticas</button>
+{% endblock %}

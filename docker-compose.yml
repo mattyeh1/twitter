@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Redis - Message broker for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: twitter_scraper_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Flask web application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: twitter_scraper_web
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - chrome_profiles:/app/chrome_profiles
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
+      - FLASK_DEBUG=False
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: python run.py
+
+  # Celery worker for async scraping
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: twitter_scraper_worker
+    volumes:
+      - .:/app
+      - chrome_profiles:/app/chrome_profiles
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DRIVER_POOL_SIZE=3
+      - HEADLESS=True
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: celery -A celery_app.celery_config worker --loglevel=info --concurrency=3
+
+  # Flower - Celery monitoring dashboard (optional)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: twitter_scraper_flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+    command: celery -A celery_app.celery_config flower --port=5555
+
+volumes:
+  redis_data:
+  chrome_profiles:

@@ -1,0 +1,24 @@
+# Flask web framework
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Celery for async tasks
+celery==5.3.4
+redis==5.0.1
+
+# Selenium for web scraping
+selenium==4.15.2
+
+# HTML parsing
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Utilities
+python-dotenv==1.0.0
+
+# Monitoring (optional)
+prometheus-flask-exporter==0.23.0
+flower==2.0.1
+
+# Task scheduling (optional)
+celery-beat==2.5.0
