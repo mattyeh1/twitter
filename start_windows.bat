@@ -70,12 +70,12 @@ timeout /t 3 /nobreak >nul
 
 REM Iniciar Celery Worker
 echo      Iniciando Celery Worker...
-start "Celery Worker" cmd /k "title Celery Worker && color 0E && celery -A celery_app.celery_config worker --loglevel=info --pool=solo --concurrency=3"
+start "Celery Worker" cmd /k "title Celery Worker && color 0E && python -m celery -A celery_app.celery_config worker --loglevel=info --pool=solo --concurrency=3"
 timeout /t 3 /nobreak >nul
 
 REM Iniciar Flower (opcional)
 echo      Iniciando Flower (monitor)...
-start "Flower Monitor" cmd /k "title Flower Monitor && color 0D && celery -A celery_app.celery_config flower --port=5555"
+start "Flower Monitor" cmd /k "title Flower Monitor && color 0D && python -m celery -A celery_app.celery_config flower --port=5555"
 timeout /t 2 /nobreak >nul
 
 echo.
