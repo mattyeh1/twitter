@@ -20,5 +20,4 @@ python-dotenv==1.0.0
 prometheus-flask-exporter==0.23.0
 flower==2.0.1
 
-# Task scheduling (optional)
-celery-beat==2.5.0
+# Task scheduling (beat está incluido en celery 5.x)
