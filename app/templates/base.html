@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Twitter Scraper Dashboard{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        h1 { color: #333; font-size: 2.5em; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 1.1em; }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            background: #1da1f2;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #0d8bd9;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button, .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover, .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover { background: #f8f9fa; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-inactive { background: #f8d7da; color: #721c24; }
+        .badge-queued { background: #fff3cd; color: #856404; }
+        .badge-progress { background: #cfe2ff; color: #084298; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-error { background: #f8d7da; color: #721c24; }
+
+        .btn-small {
+            padding: 6px 15px;
+            font-size: 0.9em;
+            margin-right: 5px;
+        }
+
+        .btn-danger { background: #dc3545; }
+        .btn-success { background: #28a745; }
+
+        .progress-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            z-index: 1000;
+        }
+
+        .progress-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+
+        .progress-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .progress-message {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Progress notifications -->
+    <div class="progress-container" id="progressContainer"></div>
+
+    <script>
+        // Track active scraping tasks
+        const activeTasks = new Map();
+
+        // Poll for task status
+        function checkTaskStatus(taskId, username) {
+            fetch(`/api/task/${taskId}`)
+                .then(r => r.json())
+                .then(data => {
+                    updateProgressUI(taskId, username, data);
+
+                    // Continue polling if not complete
+                    if (data.status === 'pending' || data.status === 'progress') {
+                        setTimeout(() => checkTaskStatus(taskId, username), 1000);
+                    } else {
+                        // Task complete, remove after delay
+                        setTimeout(() => removeProgressUI(taskId), 3000);
+
+                        // Reload page to show new tweets
+                        if (data.status === 'success') {
+                            setTimeout(() => location.reload(), 3000);
+                        }
+                    }
+                })
+                .catch(err => console.error('Error checking task:', err));
+        }
+
+        function updateProgressUI(taskId, username, data) {
+            let container = document.getElementById('progressContainer');
+            let item = document.getElementById(`progress-${taskId}`);
+
+            if (!item) {
+                item = document.createElement('div');
+                item.id = `progress-${taskId}`;
+                item.className = 'progress-item';
+                container.appendChild(item);
+            }
+
+            let percent = 0;
+            let message = '';
+            let statusBadge = '';
+
+            if (data.status === 'pending') {
+                percent = 5;
+                message = 'En cola...';
+                statusBadge = '<span class="badge badge-queued">En Cola</span>';
+            } else if (data.status === 'progress') {
+                percent = (data.current / data.total) * 100;
+                message = data.message || 'Procesando...';
+                statusBadge = '<span class="badge badge-progress">En Progreso</span>';
+            } else if (data.status === 'success') {
+                percent = 100;
+                const result = data.result || {};
+                message = `✓ ${result.tweets_new || 0} tweets nuevos encontrados`;
+                statusBadge = '<span class="badge badge-success">Completado</span>';
+            } else if (data.status === 'failed') {
+                percent = 100;
+                message = `✗ Error: ${data.error || 'Unknown error'}`;
+                statusBadge = '<span class="badge badge-error">Error</span>';
+            }
+
+            item.innerHTML = `
+                <div class="progress-header">@${username} ${statusBadge}</div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: ${percent}%"></div>
+                </div>
+                <div class="progress-message">${message}</div>
+            `;
+        }
+
+        function removeProgressUI(taskId) {
+            let item = document.getElementById(`progress-${taskId}`);
+            if (item) {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(100%)';
+                setTimeout(() => item.remove(), 300);
+            }
+        }
+
+        {% block extra_js %}{% endblock %}
+    </script>
+</body>
+</html>
